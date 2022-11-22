@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+
+  web:
+    image: people:latest
+    container_name: people_app
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_HOST=postgresql
+      - DATABASE_PORT=5432
+    depends_on:
+      - postgresql
+      - migrations
+    networks:
+      - people_organization
+
+  postgresql:
+    restart: always
+    image: postgres:latest
+    container_name: postgresql
+    volumes:
+      - ./init.sh:/docker-entrypoint-initdb.d/init.sh
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+    networks:
+      - people_organization
+
+  migrations:
+    container_name: people-migrations
+    image: people-migrations:latest
+    environment:
+      - DATABASE_HOST=postgresql
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=db_test
+      - DATABASE_SCHEMA=public
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=12345
+    depends_on:
+      - postgresql
+    networks:
+      - people_organization
+
+networks:
+  people_organization:
+    driver: bridge

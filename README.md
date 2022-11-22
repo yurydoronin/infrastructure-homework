@@ -7,6 +7,6 @@
 4. Сохранение в бд (postgres)
 
 ### API приложения ###
-http://localhost:8080/me - вывод информации о текущем пользователе
-http://localhost:8080/generate - добавление нового NPC
-http://localhost:8080/id/{id} - получение сгенерированного NPC по id
+- http://localhost:8080/me - вывод информации о текущем пользователе
+- http://localhost:8080/generate - добавление нового NPC
+- http://localhost:8080/id/{id} - получение сгенерированного NPC по id

@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    banner-mode: off
+
+  datasource:
+    url: 'jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:db_test}'
+    username: postgres
+    password: 12345
+
+  liquibase:
+    enabled: false
+    change-log: 'classpath:/db-migrations/main.xml'
+
+logging:
+  level:
+    org.springframework.orm.jpa: DEBUG
+    org.springframework.transaction: DEBUG
+    liquibase: INFO

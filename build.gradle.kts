@@ -1,76 +1,122 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
+import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
+import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+
+val parentProjectDir = projectDir
 
 plugins {
-	id("org.springframework.boot") version "2.2.1.BUILD-SNAPSHOT"
-	id("io.spring.dependency-management") version "1.0.8.RELEASE"
-	kotlin("jvm") version "1.3.50"
-	kotlin("plugin.spring") version "1.3.50"
-	id("org.jetbrains.kotlin.plugin.jpa") version "1.3.50" apply false
+    id("org.springframework.boot") version "2.7.2"
+    id("io.spring.dependency-management") version "1.0.12.RELEASE"
+    kotlin("jvm") version "1.7.20" apply false
+    kotlin("plugin.spring") version "1.7.20" apply false
+    kotlin("plugin.jpa") version "1.7.20" apply false
+    id("org.owasp.dependencycheck") version "7.3.0"
+    id("com.github.ben-manes.versions") version "0.43.0"
+    id("io.gitlab.arturbosch.detekt") version "1.22.0-RC2"
+
 }
 
 allprojects {
-	group = "com.stringconcat"
-	version = "0.0.1-SNAPSHOT"
-
-	repositories {
-		mavenCentral()
-		jcenter()
-		maven { url = uri("https://repo.spring.io/milestone") }
-		maven { url = uri("https://repo.spring.io/snapshot") }
-	}
-
-	tasks.withType<KotlinCompile> {
-		kotlinOptions {
-			freeCompilerArgs = listOf("-Xjsr305=strict")
-			jvmTarget = "1.8"
-		}
-	}
-
+    group = "com.stringconcat"
+    version = "1.0.0"
 }
 
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            eachDependency {
+                requested.version?.contains("snapshot", true)?.let {
+                    if (it) {
+                        throw GradleException("Snapshot found: ${requested.name} ${requested.version}")
+                    }
+                }
+            }
+        }
+    }
 
-val developmentOnly by configurations.creating
-configurations {
-	runtimeClasspath {
-		extendsFrom(developmentOnly)
-	}
-}
+    apply {
+        plugin("java")
+        plugin(Plugins.kotlin)
+        plugin(Plugins.detekt)
+        plugin(Plugins.update_dependencies)
+        plugin(Plugins.owasp_dependencies)
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url = uri("https://repo.spring.io/milestone") }
+    }
 
 
+    detekt {
+        config = files("$parentProjectDir/tools/detekt/detekt-config.yml")
+        buildUponDefaultConfig = true
+        source = files("src/main/kotlin", "src/test/kotlin")
 
-dependencies {
-	// spring modules
-	implementation("org.springframework.boot:spring-boot-starter-webflux")
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.springframework.boot:spring-boot-starter-data-rest")
+        reports {
+            html.required.set(true)
+        }
 
-	// kotlin
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        dependencies {
+            detektPlugins("${Plugins.detekt_formatting}:${PluginVers.detekt_formatting}")
+        }
+    }
 
-	implementation(project(":presentation"))
-	implementation(project(":persistence"))
-	implementation(project(":useCasePeople"))
-	implementation(project(":businessPeople"))
-	implementation(project(":quoteGarden"))
-	implementation(project(":avatarsDicebear"))
+    tasks {
 
-	// dev tools
-	developmentOnly("org.springframework.boot:spring-boot-devtools")
+        val dependencyUpdate =
+            named<DependencyUpdatesTask>("dependencyUpdates")
 
-	//persistance
-	implementation("org.postgresql:postgresql:42.3.4")
-	implementation("org.liquibase:liquibase-core:4.9.1")
+        dependencyUpdate {
+            revision = "release"
+            outputFormatter = "txt"
+            checkForGradleUpdate = true
+            outputDir = "$buildDir/reports/dependencies"
+            reportfileName = "updates"
+        }
 
-	// tests
-	testCompile("org.junit.jupiter:junit-jupiter-api:5.8.2")
-	testImplementation("org.springframework.boot:spring-boot-starter-test") {
-		exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
-	}
-	testImplementation("io.projectreactor:reactor-test")
-}
+        dependencyUpdate.configure {
 
-tasks.test {
-	useJUnitPlatform()
+            fun isNonStable(version: String): Boolean {
+                val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+                val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+                val isStable = stableKeyword || regex.matches(version)
+                return isStable.not()
+            }
+
+            rejectVersionIf {
+                isNonStable(candidate.version) && !isNonStable(currentVersion)
+            }
+        }
+
+        val failOnWarning = project.properties["allWarningsAsErrors"] != null &&
+                project.properties["allWarningsAsErrors"] == "true"
+
+        withType<KotlinCompile> {
+            kotlinOptions {
+                jvmTarget = "11"
+                allWarningsAsErrors = failOnWarning
+                freeCompilerArgs = listOf("-Xjvm-default=all")
+            }
+        }
+
+        withType<Test> {
+            useJUnitPlatform()
+
+            maxParallelForks = 10
+
+            testLogging {
+                events(
+                    PASSED,
+                    FAILED,
+                    SKIPPED
+                )
+                showStandardStreams = true
+                exceptionFormat = FULL
+            }
+        }
+    }
 }

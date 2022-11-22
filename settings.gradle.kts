@@ -1,7 +1,16 @@
+rootProject.name = "people"
+
+include(":application")
+include(":businessPeople")
+include(":presentation")
+include(":useCasePeople")
+include(":persistence")
+include(":quoteGarden")
+include(":avatarsDicebear")
+
 pluginManagement {
     repositories {
         maven { url = uri("https://repo.spring.io/milestone") }
-        maven { url = uri("https://repo.spring.io/snapshot") }
         gradlePluginPortal()
     }
     resolutionStrategy {
@@ -12,10 +21,3 @@ pluginManagement {
         }
     }
 }
-rootProject.name = "people"
-include(":businessPeople")
-include(":presentation")
-include(":useCasePeople")
-include(":persistence")
-include(":quoteGarden")
-include(":avatarsDicebear")
