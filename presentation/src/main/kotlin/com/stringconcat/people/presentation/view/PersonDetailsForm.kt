@@ -13,23 +13,23 @@ import kotlinx.html.submitInput
 import kotlinx.html.textInput
 import java.lang.StringBuilder
 
-fun personDetailsForm(): String =
+fun personDetailsForm() =
     StringBuilder()
-            .appendHTML()
-            .html {
-                bootstrapHeader()
-                body {
-                    div(classes = "header") {
-                        h1 {+ "Create a new person"}
-                    }
-                    div("body") {
-                        form(action = "/generate", method = FormMethod.post) {
-                            p { +"First name " }; textInput(name = "firstName")
-                            p { +"Last name " }; textInput(name = "secondName")
-                            p { +"Birthdate " }; dateInput(name = "birthDate")
-                            p { +"Gender " }; textInput(name = "gender")
-                            p { + "" }; submitInput()
-                        }
+        .appendHTML()
+        .html {
+            bootstrapHeader()
+            body {
+                div(classes = "header") {
+                    h1 { +"Create a new person" }
+                }
+                div("body") {
+                    form(action = "/generate", method = FormMethod.post) {
+                        p { +"First name " }; textInput(name = "firstName")
+                        p { +"Last name " }; textInput(name = "secondName")
+                        p { +"Birthdate " }; dateInput(name = "birthDate")
+                        p { +"Gender " }; textInput(name = "gender")
+                        p { +"" }; submitInput()
                     }
                 }
-            }.toString()
+            }
+        }.toString()

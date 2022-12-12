@@ -1,8 +1,8 @@
 package com.stringconcat.people.presentation.model
 
 import com.stringconcat.people.businessPeople.Person
-
-const val AGE = 40
+import com.stringconcat.people.businessPeople.Person.Sex.MAN
+import com.stringconcat.people.businessPeople.Person.Sex.WOMAN
 
 class PersonRespectfullViewModel(
     private val person: Person
@@ -11,13 +11,12 @@ class PersonRespectfullViewModel(
     fun title() = "${prefixIfNeeded()} ${person.firstName} ${person.secondName}"
 
     private fun prefixIfNeeded() =
-        if (person.age() > AGE)
+        if (person.mature())
             when (person.sex) {
-                Person.Sex.MAN -> "Mr"
-                Person.Sex.WOMAN -> "Mrs"
+                MAN -> "Mr"
+                WOMAN -> "Mrs"
             }
         else ""
-
 
     fun avatarUrl() = person.avatartUrl
 

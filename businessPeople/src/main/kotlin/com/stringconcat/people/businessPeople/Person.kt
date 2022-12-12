@@ -20,9 +20,8 @@ data class Person(
     fun mature(forDate: LocalDate = LocalDate.now()): Boolean =
         age(forDate) > AGE
 
-
-    fun age(forDate: LocalDate = LocalDate.now()): Year =
-        Period.between(forDate, birthDate).years
+    private fun age(forDate: LocalDate = LocalDate.now()): Year =
+        Period.between(birthDate, forDate).years
 
     enum class Sex {
         MAN, WOMAN
